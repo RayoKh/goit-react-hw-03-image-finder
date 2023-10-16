@@ -64,7 +64,7 @@ export class App extends Component {
     page: 1,
     largeImageURL: '',
     loading: false,
-    endCollection: false,
+    isFetching: false,
   };
 
   componentDidMount() {
@@ -82,8 +82,12 @@ export class App extends Component {
   };
 
   fetchImages = async () => {
-    const { query, page } = this.state;
+    const { query, page, isFetching } = this.state;
     const perPage = 12;
+
+    if (isFetching) {
+      return;
+    }
 
     this.setState({ loading: true });
 
@@ -97,6 +101,8 @@ export class App extends Component {
       }));
     } catch (error) {
       console.error('Error fetching images: ', error);
+    } finally {
+      this.setState({ isFetching: false });
     }
   };
 
@@ -117,7 +123,7 @@ export class App extends Component {
   };
 
   render() {
-    const { images, loading, largeImageURL } = this.state;
+    const { images, largeImageURL, isFetching } = this.state;
 
     return (
       <Wrapper>
@@ -131,8 +137,10 @@ export class App extends Component {
             />
           ))}
         </ImageGallery>
-        {images.length > 0 && <Button onClick={this.handleLoadMore} />}
-        {loading && <Loader />}
+        {images.length > 0 && !isFetching && (
+          <Button onClick={this.handleLoadMore} />
+        )}
+        {isFetching && <Loader />}
         {largeImageURL && (
           <Modal
             largeImageURL={largeImageURL}
