@@ -1,51 +1,3 @@
-// const { Component } = require('react');
-
-// class App extends Component {
-//   state = {
-//     query: '',
-//     images: [],
-//     page: 1,
-//   };
-
-//   handleSubmit = e => {
-//     e.preventDefault();
-
-//     this.setState({
-//       query: e.target.elements.query.value,
-//       images: [],
-//       page: 1,
-//     });
-//   };
-
-//   handleLoadMore = () => {
-//     this.setState(prevState => ({
-//       page: prevState.page + 1,
-//     }));
-//   };
-
-//   componentDidUpdate(prevProps, prevState) {
-//     if (
-//       prevState.query !== this.state.query ||
-//       prevState.page !== this.state.page
-//     ) {
-//       // HTTP REQUEST
-//     }
-//   }
-
-//   render() {
-//     return (
-//       <div>
-//         <form onSubmit={this.handleSubmit}>
-//           <input type="text" name="query" />
-//           <button type="submit">Search</button>
-//         </form>
-//         {this.state.images.length > 0 && <div>Gallery</div>}
-//         <button onClick={this.handleLoadMore}>Load more</button>
-//       </div>
-//     );
-//   }
-// }
-
 import { Component } from 'react';
 import { fetchImages } from './api/api';
 import { Searchbar } from './Searchbar/Searchbar';
@@ -65,14 +17,15 @@ export class App extends Component {
     largeImageURL: '',
     loading: false,
     isFetching: false,
+    currentHits: 0,
+    totalHits: 0,
+    showBtn: false,
+    error: null,
+    isEmpty: false,
   };
 
   componentDidMount() {
     window.addEventListener('keydown', this.handleKeyPress);
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.handleKeyPress);
   }
 
   handleKeyPress = e => {
@@ -94,20 +47,29 @@ export class App extends Component {
     try {
       const newImages = await fetchImages(query, page, perPage);
 
+      if (newImages.hits.total === 0) {
+        this.setState({ isEmpty: true, isLoading: false, showBtn: false });
+      }
+
       this.setState(prevState => ({
-        images: [...prevState.images, ...newImages],
+        images: [...prevState.images, ...newImages.hits],
         page: prevState.page + 1,
         loading: false,
+        currentHits: prevState.currentHits + 12,
+        totalHits: newImages.total,
       }));
     } catch (error) {
-      console.error('Error fetching images: ', error);
+      this.setState({ error });
     } finally {
-      this.setState({ isFetching: false });
+      this.setState({ isFetching: false, isEmpty: false });
     }
   };
 
   handleSearch = query => {
-    this.setState({ query, page: 1, images: [] }, this.fetchImages);
+    this.setState(
+      { query, page: 1, images: [], currentHits: 0 },
+      this.fetchImages
+    );
   };
 
   handleLoadMore = () => {
@@ -122,8 +84,25 @@ export class App extends Component {
     this.setState({ largeImageURL: '' });
   };
 
+  componentDidUpdate(_, prevState) {
+    const { currentHits, totalHits } = this.state;
+    if (
+      currentHits !== prevState.currentHits ||
+      totalHits !== prevState.totalHits
+    ) {
+      if (this.state.currentHits >= this.state.totalHits) {
+        this.setState({ showBtn: false });
+      } else {
+        this.setState({ showBtn: true });
+      }
+    }
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('keydown', this.handleKeyPress);
+  }
   render() {
-    const { images, largeImageURL, isFetching } = this.state;
+    const { images, largeImageURL, isFetching, showBtn, isEmpty } = this.state;
 
     return (
       <Wrapper>
@@ -137,7 +116,7 @@ export class App extends Component {
             />
           ))}
         </ImageGallery>
-        {images.length > 0 && !isFetching && (
+        {images.length > 0 && !isFetching && showBtn && (
           <Button onClick={this.handleLoadMore} />
         )}
         {isFetching && <Loader />}
@@ -146,6 +125,11 @@ export class App extends Component {
             largeImageURL={largeImageURL}
             onClose={this.handleCloseModal}
           />
+        )}
+        {isEmpty && (
+          <div>
+            <h1>OOPS!</h1>
+          </div>
         )}
         <GlobalStyle />
       </Wrapper>
