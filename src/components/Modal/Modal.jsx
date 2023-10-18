@@ -1,17 +1,36 @@
-/* <div class="overlay">
-  <div class="modal">
-    <img src="" alt="" />
-  </div>
-</div>; */
-
+import { Component } from 'react';
 import { Overlay, ModalWrapper } from './Modal.styled';
 
-export const Modal = ({ largeImageURL, onClose }) => {
-  return (
-    <Overlay onClick={onClose}>
-      <ModalWrapper>
-        <img src={largeImageURL} alt="Large" />
-      </ModalWrapper>
-    </Overlay>
-  );
-};
+export class Modal extends Component {
+  componentDidMount() {
+    window.addEventListener('keydown', this.handleKeyDown);
+  }
+
+  handleKeyDown = e => {
+    if (e.code === `Escape`) {
+      this.props.onModalClose();
+    }
+  };
+
+  handleBackdropeClick = e => {
+    if (e.target === e.currentTarget) {
+      this.props.onModalClose();
+    }
+  };
+
+  componentWillUnmount() {
+    window.removeEventListener('keydown', this.handleKeyDown);
+  }
+
+  render() {
+    const { largeImageURL } = this.props.largeImage;
+
+    return (
+      <Overlay onClick={this.handleBackdropeClick}>
+        <ModalWrapper>
+          <img src={largeImageURL} alt="LargeImage" />
+        </ModalWrapper>
+      </Overlay>
+    );
+  }
+}

@@ -1,9 +1,16 @@
 import { GalleryItem, GalleryItemImg } from './ImageGalleryItem.styled';
 
-export const ImageGalleryItem = ({ image, onClick }) => {
+export const ImageGalleryItem = ({ images, onClick }) => {
+  const { webformatURL, largeImageURL } = images;
+
   return (
-    <GalleryItem onClick={() => onClick(image.largeImageURL)}>
-      <GalleryItemImg src={image.webformatURL} alt={image.id} />
+    <GalleryItem
+      onClick={e => {
+        e.preventDefault();
+        onClick({ largeImageURL });
+      }}
+    >
+      <GalleryItemImg src={webformatURL} alt="LargeImage" />
     </GalleryItem>
   );
 };
