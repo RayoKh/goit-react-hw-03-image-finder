@@ -38,11 +38,10 @@ export class App extends Component {
           this.setState(prevState => ({
             images: [...prevState.images, ...images.hits],
             showBtn: page < Math.ceil(images.totalHits / 12),
-            loading: false,
           }));
         })
-        .catch(error => this.setState({ error, loading: false }))
-        .finally(this.setState({ isEmpty: false }));
+        .catch(error => this.setState({ error }))
+        .finally(this.setState({ loading: false }));
     }
   }
 
@@ -51,6 +50,7 @@ export class App extends Component {
       query,
       images: [],
       page: 1,
+      isEmpty: false,
     });
   };
 
